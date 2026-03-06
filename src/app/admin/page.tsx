@@ -35,9 +35,9 @@ export default function AdminPage() {
       const headers = { Authorization: `Bearer ${token}` };
 
       const [slidesRes, settingsRes, birthdaysRes] = await Promise.all([
-        fetch("/api/slides", { headers }),
-        fetch("/api/settings", { headers }),
-        fetch("/api/birthdays", { headers }),
+        fetch("/api/slides", { headers, cache: "no-store" }),
+        fetch("/api/settings", { headers, cache: "no-store" }),
+        fetch("/api/birthdays", { headers, cache: "no-store" }),
       ]);
 
       if (slidesRes.status === 401) {

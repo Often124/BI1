@@ -3,6 +3,9 @@ import { getAllSlides, getSlides, addSlide, updateSlide, deleteSlide, reorderSli
 import { isAuthenticated } from "@/lib/auth";
 import { v4 as uuidv4 } from "uuid";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 // GET /api/slides - Récupérer les slides (publics = actifs, admin = tous)
 export async function GET(request: NextRequest) {
   const isAdmin = isAuthenticated(request);

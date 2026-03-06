@@ -3,6 +3,9 @@ import { getBirthdays, addBirthday, updateBirthday, deleteBirthday } from "@/lib
 import { isAuthenticated } from "@/lib/auth";
 import { v4 as uuidv4 } from "uuid";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 // GET /api/birthdays — liste publique
 export async function GET() {
   const birthdays = await getBirthdays();

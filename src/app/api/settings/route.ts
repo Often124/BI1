@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSettings, updateSettings } from "@/lib/db";
 import { isAuthenticated } from "@/lib/auth";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 // GET /api/settings - Récupérer les paramètres
 export async function GET(request: NextRequest) {
   const settings = await getSettings();

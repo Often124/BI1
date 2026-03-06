@@ -42,6 +42,12 @@ export interface WeatherData {
   description: string;
   icon: string;
   city: string;
+  forecast?: {
+    day: string;
+    tempMin: number;
+    tempMax: number;
+    icon: string;
+  }[];
 }
 
 export interface AuthPayload {

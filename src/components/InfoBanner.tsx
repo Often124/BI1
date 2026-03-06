@@ -9,11 +9,16 @@ import ScrollingText from "./ScrollingText";
 
 interface InfoBannerProps {
   settings: Settings;
+  fixed?: boolean;
 }
 
-export default function InfoBanner({ settings }: InfoBannerProps) {
+export default function InfoBanner({ settings, fixed = false }: InfoBannerProps) {
+  const containerClass = fixed
+    ? "fixed bottom-0 left-0 right-0 z-[80] pointer-events-none"
+    : "absolute bottom-0 left-0 right-0 z-10";
+
   return (
-    <div className="absolute bottom-0 left-0 right-0 z-10">
+    <div className={containerClass}>
       {/* Bandeau principal */}
       <div className="bg-black/80 backdrop-blur-md border-t border-white/10">
         {/* Ligne du texte défilant */}

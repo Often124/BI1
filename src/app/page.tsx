@@ -95,7 +95,15 @@ export default function DisplayPage() {
   const useGoogleSlides = settings.googleSlidesEnabled && settings.googleSlidesUrl;
 
   return (
-    <div className="w-screen h-screen overflow-hidden bg-black cursor-none-all">
+    <div className="relative w-screen h-screen overflow-hidden bg-black cursor-none-all">
+      <div className="fixed top-4 left-4 z-[85] pointer-events-none">
+        <img
+          src="/logo-bi1.png"
+          alt="Bi1"
+          className="h-14 w-auto drop-shadow-[0_6px_20px_rgba(0,0,0,0.45)]"
+        />
+      </div>
+
       {useGoogleSlides ? (
         <GoogleSlidesEmbed
           url={settings.googleSlidesUrl}
@@ -107,7 +115,7 @@ export default function DisplayPage() {
           transitionDuration={settings.transitionDuration}
         />
       )}
-      <InfoBanner settings={settings} />
+      <InfoBanner settings={settings} fixed />
     </div>
   );
 }

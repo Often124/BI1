@@ -1,10 +1,23 @@
 import { createClient } from "@supabase/supabase-js";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co";
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder-anon-key";
+const resolvedSupabaseUrl =
+	process.env.NEXT_PUBLIC_SUPABASE_URL ||
+	process.env.SUPABASE_URL ||
+	"";
 
-if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-	console.warn("Supabase env vars manquantes: NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY");
+const resolvedSupabaseAnonKey =
+	process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+	process.env.SUPABASE_ANON_KEY ||
+	process.env.CLIENT_KEY ||
+	"";
+
+const supabaseUrl = resolvedSupabaseUrl || "https://placeholder.supabase.co";
+const supabaseAnonKey = resolvedSupabaseAnonKey || "placeholder-anon-key";
+
+if (!resolvedSupabaseUrl || !resolvedSupabaseAnonKey) {
+	console.warn(
+		"Supabase env vars manquantes: utilisez NEXT_PUBLIC_SUPABASE_URL + NEXT_PUBLIC_SUPABASE_ANON_KEY (ou SUPABASE_URL + CLIENT_KEY)"
+	);
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);

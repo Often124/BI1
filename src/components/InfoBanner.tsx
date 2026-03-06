@@ -18,19 +18,19 @@ export default function InfoBanner({ settings }: InfoBannerProps) {
       <div className="bg-black/80 backdrop-blur-md border-t border-white/10">
         {/* Ligne du texte défilant */}
         {settings.showScrollingText && settings.scrollingText && (
-          <div className="border-b border-white/5 py-2 px-4">
+          <div className="border-b border-white/5 py-3 px-6">
             <ScrollingText text={settings.scrollingText} speed={settings.scrollSpeed} />
           </div>
         )}
 
         {/* Ligne d'infos: heure, date, météo, anniversaires */}
-        <div className="flex items-center justify-between px-6 py-3">
-          <div className="flex items-center gap-8">
+        <div className="flex items-center justify-between px-8 py-5">
+          <div className="flex items-center gap-10">
             {settings.showClock && <Clock />}
             {settings.showDate && <DateDisplay />}
           </div>
 
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-8">
             {settings.showBirthdays && <BirthdayDisplay />}
             {settings.showWeather && <Weather />}
           </div>

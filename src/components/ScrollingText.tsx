@@ -11,7 +11,7 @@ export default function ScrollingText({ text, speed = 20 }: ScrollingTextProps) 
   return (
     <div className="overflow-hidden whitespace-nowrap flex-1 mx-4">
       <span
-        className="inline-block animate-scroll-left text-white/90 text-lg"
+        className="inline-block animate-scroll-left text-white/90 text-2xl"
         style={{ "--scroll-duration": `${speed}s` } as React.CSSProperties}
       >
         {text}

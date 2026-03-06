@@ -98,30 +98,30 @@ export default function BirthdayDisplay() {
   const { birthday, daysUntil, isToday } = upcoming;
 
   return (
-    <div className="flex items-center gap-2">
-      <span className={`text-xl ${isToday ? "animate-bounce" : ""}`}>🎂</span>
+    <div className="flex items-center gap-3">
+      <span className={`text-2xl ${isToday ? "animate-bounce" : ""}`}>🎂</span>
       <div className="flex flex-col">
         {isToday ? (
           <>
-            <span className="text-sm font-semibold text-yellow-300 leading-tight">
+            <span className="text-base font-semibold text-yellow-300 leading-tight">
               Joyeux anniversaire {birthday.name} !
             </span>
           </>
         ) : daysUntil === 1 ? (
           <>
-            <span className="text-sm font-semibold text-white leading-tight">
+            <span className="text-base font-semibold text-white leading-tight">
               {birthday.name}
             </span>
-            <span className="text-xs text-white/60 leading-tight">
+            <span className="text-sm text-white/60 leading-tight">
               Demain !
             </span>
           </>
         ) : (
           <>
-            <span className="text-sm font-semibold text-white leading-tight">
+            <span className="text-base font-semibold text-white leading-tight">
               {birthday.name}
             </span>
-            <span className="text-xs text-white/60 leading-tight">
+            <span className="text-sm text-white/60 leading-tight">
               {birthday.day} {MONTH_NAMES[birthday.month]} — dans {daysUntil} jour{daysUntil > 1 ? "s" : ""}
             </span>
           </>

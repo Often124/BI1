@@ -1,0 +1,9 @@
+# Bi1Gestion - Affichage Dynamique
+
+node_modules/
+.next/
+out/
+.env.local
+data/db.json
+public/uploads/*
+!public/uploads/.gitkeep

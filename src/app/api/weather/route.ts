@@ -1,10 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSettings } from "@/lib/db";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export async function GET(request: NextRequest) {
   try {
     const settings = await getSettings();
-    const apiKey = settings.weatherApiKey || process.env.OPENWEATHER_API_KEY;
+    const settingsKey = settings.weatherApiKey && settings.weatherApiKey !== "***" ? settings.weatherApiKey : "";
+    const envKey =
+      process.env.OPENWEATHER_API_KEY ||
+      process.env.WEATHER_API_KEY ||
+      process.env.NEXT_PUBLIC_OPENWEATHER_API_KEY ||
+      "";
+    const apiKey = settingsKey || envKey;
     const city = settings.weatherCity || "Paris";
 
     if (!apiKey) {
@@ -19,10 +28,19 @@ export async function GET(request: NextRequest) {
     }
 
     const url = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&units=metric&lang=fr&appid=${apiKey}`;
-    const response = await fetch(url, { next: { revalidate: 600 } }); // Cache 10 min
+    const response = await fetch(url, { cache: "no-store" });
 
     if (!response.ok) {
-      throw new Error(`Weather API error: ${response.status}`);
+      const errorData = await response.json().catch(() => null);
+      const message = errorData?.message || `Weather API error: ${response.status}`;
+      return NextResponse.json(
+        {
+          temp: "--",
+          description: `Météo indisponible (${message})`,
+          icon: "01d",
+          city,
+        }
+      );
     }
 
     const data = await response.json();

@@ -10,11 +10,13 @@ export default function DisplayPage() {
   const [slides, setSlides] = useState<Slide[]>([]);
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
 
+  const REFRESH_MS = 5000;
+
   const fetchData = useCallback(async () => {
     try {
       const [slidesRes, settingsRes] = await Promise.all([
-        fetch("/api/slides"),
-        fetch("/api/settings"),
+        fetch("/api/slides", { cache: "no-store" }),
+        fetch("/api/settings", { cache: "no-store" }),
       ]);
 
       if (slidesRes.ok) {
@@ -34,10 +36,10 @@ export default function DisplayPage() {
   useEffect(() => {
     fetchData();
 
-    // Actualisation automatique toutes les 30 secondes
-    const interval = setInterval(fetchData, 30000);
+    // Actualisation automatique sans refresh de page
+    const interval = setInterval(fetchData, REFRESH_MS);
     return () => clearInterval(interval);
-  }, [fetchData]);
+  }, [fetchData, REFRESH_MS]);
 
   const useGoogleSlides = settings.googleSlidesEnabled && settings.googleSlidesUrl;
 

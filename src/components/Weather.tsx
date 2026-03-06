@@ -9,7 +9,7 @@ export default function Weather() {
   useEffect(() => {
     const fetchWeather = async () => {
       try {
-        const res = await fetch("/api/weather");
+        const res = await fetch("/api/weather", { cache: "no-store" });
         if (res.ok) {
           const data = await res.json();
           setWeather(data);
@@ -20,8 +20,8 @@ export default function Weather() {
     };
 
     fetchWeather();
-    // Actualiser toutes les 15 minutes
-    const interval = setInterval(fetchWeather, 15 * 60 * 1000);
+    // Actualiser toutes les 60 secondes pour refléter rapidement les changements de clé/ville
+    const interval = setInterval(fetchWeather, 60 * 1000);
     return () => clearInterval(interval);
   }, []);
 

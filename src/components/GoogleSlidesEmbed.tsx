@@ -54,7 +54,7 @@ export default function GoogleSlidesEmbed({ url, delayMs }: GoogleSlidesEmbedPro
   }
 
   return (
-    <div className="absolute inset-0 bg-black">
+    <div className="absolute inset-0 overflow-hidden bg-black">
       <iframe
         src={embedUrl}
         className="w-full h-full border-0"
@@ -62,12 +62,12 @@ export default function GoogleSlidesEmbed({ url, delayMs }: GoogleSlidesEmbedPro
         allow="autoplay"
         title="Google Slides"
         style={{
-          /* Agrandir légèrement pour masquer le cadre/contrôles Google */
+          /* Full-bleed pour supprimer les bandes noires visibles */
           position: "absolute",
-          top: "-2px",
-          left: "-2px",
-          width: "calc(100% + 4px)",
-          height: "calc(100% + 4px)",
+          top: "-4%",
+          left: "-4%",
+          width: "108%",
+          height: "108%",
         }}
       />
     </div>

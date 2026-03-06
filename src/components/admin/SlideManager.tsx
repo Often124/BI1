@@ -50,7 +50,7 @@ export default function SlideManager({ slides, token, onUpdate }: SlideManagerPr
         const uploadData = await uploadRes.json();
 
         // 2. Créer le slide
-        await fetch("/api/slides", {
+        const createRes = await fetch("/api/slides", {
           method: "POST",
           headers: jsonHeaders,
           body: JSON.stringify({
@@ -59,6 +59,11 @@ export default function SlideManager({ slides, token, onUpdate }: SlideManagerPr
             duration: 5,
           }),
         });
+
+        if (!createRes.ok) {
+          const err = await createRes.json().catch(() => ({ error: "Erreur création slide" }));
+          alert(`Erreur création slide: ${err.error || "inconnue"}`);
+        }
       }
       onUpdate();
     } catch (error) {
@@ -75,10 +80,15 @@ export default function SlideManager({ slides, token, onUpdate }: SlideManagerPr
     if (!confirm("Supprimer cette image ?")) return;
 
     try {
-      await fetch(`/api/slides?id=${id}`, {
+      const res = await fetch(`/api/slides?id=${id}`, {
         method: "DELETE",
         headers,
       });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "Suppression impossible" }));
+        alert(err.error || "Suppression impossible");
+        return;
+      }
       onUpdate();
     } catch (error) {
       alert("Erreur lors de la suppression");
@@ -88,11 +98,16 @@ export default function SlideManager({ slides, token, onUpdate }: SlideManagerPr
   // Modifier la durée
   const handleDurationChange = async (id: string, duration: number) => {
     try {
-      await fetch("/api/slides", {
+      const res = await fetch("/api/slides", {
         method: "PUT",
         headers: jsonHeaders,
         body: JSON.stringify({ id, duration }),
       });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "Mise à jour impossible" }));
+        alert(err.error || "Mise à jour impossible");
+        return;
+      }
       onUpdate();
     } catch (error) {
       console.error("Erreur maj durée:", error);
@@ -102,11 +117,16 @@ export default function SlideManager({ slides, token, onUpdate }: SlideManagerPr
   // Activer/désactiver un slide
   const handleToggleActive = async (id: string, active: boolean) => {
     try {
-      await fetch("/api/slides", {
+      const res = await fetch("/api/slides", {
         method: "PUT",
         headers: jsonHeaders,
         body: JSON.stringify({ id, active }),
       });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "Mise à jour impossible" }));
+        alert(err.error || "Mise à jour impossible");
+        return;
+      }
       onUpdate();
     } catch (error) {
       console.error("Erreur toggle:", error);
@@ -133,11 +153,16 @@ export default function SlideManager({ slides, token, onUpdate }: SlideManagerPr
     orderedIds.splice(toIndex, 0, draggedId);
 
     try {
-      await fetch("/api/slides", {
+      const res = await fetch("/api/slides", {
         method: "PUT",
         headers: jsonHeaders,
         body: JSON.stringify({ orderedIds }),
       });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "Réordonnement impossible" }));
+        alert(err.error || "Réordonnement impossible");
+        return;
+      }
       onUpdate();
     } catch (error) {
       console.error("Erreur réordonnement:", error);
@@ -160,11 +185,16 @@ export default function SlideManager({ slides, token, onUpdate }: SlideManagerPr
     }
 
     try {
-      await fetch("/api/slides", {
+      const res = await fetch("/api/slides", {
         method: "PUT",
         headers: jsonHeaders,
         body: JSON.stringify({ orderedIds }),
       });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "Déplacement impossible" }));
+        alert(err.error || "Déplacement impossible");
+        return;
+      }
       onUpdate();
     } catch (error) {
       console.error("Erreur déplacement:", error);

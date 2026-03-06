@@ -6,7 +6,7 @@ import { v4 as uuidv4 } from "uuid";
 // GET /api/slides - Récupérer les slides (publics = actifs, admin = tous)
 export async function GET(request: NextRequest) {
   const isAdmin = isAuthenticated(request);
-  const slides = isAdmin ? getAllSlides() : getSlides();
+  const slides = isAdmin ? await getAllSlides() : await getSlides();
   return NextResponse.json(slides);
 }
 
@@ -24,8 +24,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Filename requis" }, { status: 400 });
     }
 
-    const allSlides = getAllSlides();
-    const slide = addSlide({
+    const allSlides = await getAllSlides();
+    const slide = await addSlide({
       id: uuidv4(),
       filename,
       originalName: originalName || filename,
@@ -53,14 +53,14 @@ export async function PUT(request: NextRequest) {
 
     // Réordonner les slides
     if (body.orderedIds && Array.isArray(body.orderedIds)) {
-      const slides = reorderSlides(body.orderedIds);
+      const slides = await reorderSlides(body.orderedIds);
       return NextResponse.json(slides);
     }
 
     // Mettre à jour un slide
     if (body.id) {
       const { id, ...updates } = body;
-      const slide = updateSlide(id, updates);
+      const slide = await updateSlide(id, updates);
       if (!slide) {
         return NextResponse.json({ error: "Slide non trouvé" }, { status: 404 });
       }
@@ -88,7 +88,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "ID requis" }, { status: 400 });
     }
 
-    const deleted = deleteSlide(id);
+    const deleted = await deleteSlide(id);
     if (!deleted) {
       return NextResponse.json({ error: "Slide non trouvé" }, { status: 404 });
     }

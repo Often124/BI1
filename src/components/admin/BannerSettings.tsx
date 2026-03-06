@@ -13,6 +13,7 @@ export default function BannerSettings({ settings, token, onUpdate }: BannerSett
   const [localSettings, setLocalSettings] = useState(settings);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     setLocalSettings(settings);
@@ -21,6 +22,7 @@ export default function BannerSettings({ settings, token, onUpdate }: BannerSett
   const handleSave = async () => {
     setSaving(true);
     setSaved(false);
+    setErrorMessage(null);
 
     try {
       const res = await fetch("/api/settings", {
@@ -36,9 +38,16 @@ export default function BannerSettings({ settings, token, onUpdate }: BannerSett
         setSaved(true);
         onUpdate();
         setTimeout(() => setSaved(false), 2000);
+      } else {
+        const err = await res.json().catch(() => ({ error: "Erreur de sauvegarde" }));
+        const message = err.error || "Erreur de sauvegarde";
+        setErrorMessage(message);
+        alert(message);
       }
     } catch (error) {
       console.error("Erreur sauvegarde:", error);
+      setErrorMessage("Erreur réseau lors de la sauvegarde");
+      alert("Erreur réseau lors de la sauvegarde");
     } finally {
       setSaving(false);
     }
@@ -89,6 +98,12 @@ export default function BannerSettings({ settings, token, onUpdate }: BannerSett
           )}
         </button>
       </div>
+
+      {errorMessage && (
+        <div className="px-4 py-3 rounded-xl border border-red-500/40 bg-red-500/10 text-red-300 text-sm">
+          {errorMessage}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Texte défilant */}

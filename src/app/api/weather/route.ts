@@ -3,7 +3,7 @@ import { getSettings } from "@/lib/db";
 
 export async function GET(request: NextRequest) {
   try {
-    const settings = getSettings();
+    const settings = await getSettings();
     const apiKey = settings.weatherApiKey || process.env.OPENWEATHER_API_KEY;
     const city = settings.weatherCity || "Paris";
 

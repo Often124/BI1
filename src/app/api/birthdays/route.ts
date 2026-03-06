@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from "uuid";
 
 // GET /api/birthdays — liste publique
 export async function GET() {
-  const birthdays = getBirthdays();
+  const birthdays = await getBirthdays();
   return NextResponse.json(birthdays);
 }
 
@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Date invalide" }, { status: 400 });
     }
 
-    const birthday = addBirthday({
+    const birthday = await addBirthday({
       id: uuidv4(),
       name: name.trim(),
       day: Number(day),
@@ -59,7 +59,7 @@ export async function PUT(request: NextRequest) {
     if (updates.day) updates.day = Number(updates.day);
     if (updates.month) updates.month = Number(updates.month);
 
-    const birthday = updateBirthday(id, updates);
+    const birthday = await updateBirthday(id, updates);
     if (!birthday) {
       return NextResponse.json({ error: "Anniversaire non trouvé" }, { status: 404 });
     }
@@ -85,7 +85,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "ID requis" }, { status: 400 });
     }
 
-    const deleted = deleteBirthday(id);
+    const deleted = await deleteBirthday(id);
     if (!deleted) {
       return NextResponse.json({ error: "Anniversaire non trouvé" }, { status: 404 });
     }

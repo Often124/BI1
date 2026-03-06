@@ -4,7 +4,7 @@ import { isAuthenticated } from "@/lib/auth";
 
 // GET /api/settings - Récupérer les paramètres
 export async function GET(request: NextRequest) {
-  const settings = getSettings();
+  const settings = await getSettings();
   const isAdmin = isAuthenticated(request);
 
   if (isAdmin) {
@@ -31,7 +31,7 @@ export async function PUT(request: NextRequest) {
       delete body.weatherApiKey;
     }
 
-    const settings = updateSettings(body);
+    const settings = await updateSettings(body);
     return NextResponse.json(settings);
   } catch (error) {
     console.error("Update settings error:", error);

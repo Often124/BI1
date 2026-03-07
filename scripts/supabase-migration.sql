@@ -2,6 +2,9 @@
 -- Bi1Gestion — Supabase migration
 -- =============================================
 
+-- Extension requise pour gen_random_uuid()
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
 -- Table : slides
 CREATE TABLE IF NOT EXISTS slides (
   id TEXT PRIMARY KEY,
@@ -62,6 +65,13 @@ CREATE TABLE IF NOT EXISTS admin_users (
   permissions JSONB NOT NULL DEFAULT '[]'::jsonb,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- Compatibilité migration incrémentale
+ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS username TEXT;
+ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS password_hash TEXT;
+ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT true;
+ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS permissions JSONB NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT now();
 
 -- Insérer la ligne de settings par défaut si elle n'existe pas
 INSERT INTO settings (id) VALUES (1) ON CONFLICT (id) DO NOTHING;

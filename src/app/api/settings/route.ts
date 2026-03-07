@@ -43,6 +43,7 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json(settings);
   } catch (error) {
     console.error("Update settings error:", error);
-    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
+    const message = error instanceof Error ? error.message : "Erreur serveur";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

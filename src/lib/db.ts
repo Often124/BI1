@@ -205,16 +205,33 @@ export async function updateSettings(updates: Partial<Settings>): Promise<Settin
   if (updates.googleSlidesDelayMs !== undefined) row.google_slides_delay_ms = updates.googleSlidesDelayMs;
   row.id = 1;
 
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from("settings")
     .upsert(row, { onConflict: "id" })
     .select()
     .single();
 
+  // Compatibilité si la migration SQL n'a pas encore ajouté emergency_mode/emergency_message.
+  if (error && /emergency_mode|emergency_message/i.test(error.message || "")) {
+    const fallbackRow = { ...row };
+    delete fallbackRow.emergency_mode;
+    delete fallbackRow.emergency_message;
+
+    const retry = await supabase
+      .from("settings")
+      .upsert(fallbackRow, { onConflict: "id" })
+      .select()
+      .single();
+
+    data = retry.data;
+    error = retry.error;
+  }
+
   if (error || !data) {
     console.error("updateSettings error:", error);
-    throw new Error("Impossible de sauvegarder les paramètres");
+    throw new Error(`Impossible de sauvegarder les paramètres (${error?.message || "erreur inconnue"})`);
   }
+
   return settingsFromRow(data);
 }
 

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAuthenticatedUsername, isAuthenticated } from "@/lib/auth";
+import { getAuthenticatedUsername, hasPermission, isAuthenticated } from "@/lib/auth";
 import { addAdminLog, getUploadsDir } from "@/lib/db";
 import { v4 as uuidv4 } from "uuid";
 import path from "path";
@@ -8,6 +8,9 @@ import fs from "fs";
 export async function POST(request: NextRequest) {
   if (!isAuthenticated(request)) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+  }
+  if (!hasPermission(request, "manageSlides")) {
+    return NextResponse.json({ error: "Permissions insuffisantes" }, { status: 403 });
   }
 
   try {

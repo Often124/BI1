@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { supabase } from "@/lib/supabase";
-import { Slide, Settings, Birthday, DEFAULT_SETTINGS, AdminLog } from "@/types";
+import { Slide, Settings, Birthday, DEFAULT_SETTINGS, AdminLog, AdminUser, AdminPermission } from "@/types";
 
 const UPLOADS_DIR = path.join(process.cwd(), "public", "uploads");
 
@@ -50,6 +50,21 @@ function logFromRow(row: Record<string, unknown>): AdminLog {
     id: row.id as string,
     action: row.action as string,
     details: row.details as string,
+    createdAt: row.created_at as string,
+  };
+}
+
+function normalizePermissions(value: unknown): AdminPermission[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((p): p is AdminPermission => typeof p === "string") as AdminPermission[];
+}
+
+function adminUserFromRow(row: Record<string, unknown>): AdminUser {
+  return {
+    id: row.id as string,
+    username: row.username as string,
+    isActive: row.is_active as boolean,
+    permissions: normalizePermissions(row.permissions),
     createdAt: row.created_at as string,
   };
 }
@@ -316,4 +331,103 @@ export async function getAdminLogs(limit = 100): Promise<AdminLog[]> {
   }
 
   return (data || []).map(logFromRow);
+}
+
+// ===== ADMIN USERS =====
+
+export async function getAdminUsers(): Promise<AdminUser[]> {
+  const { data, error } = await supabase
+    .from("admin_users")
+    .select("id, username, is_active, permissions, created_at")
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    console.error("getAdminUsers error:", error);
+    return [];
+  }
+
+  return (data || []).map(adminUserFromRow);
+}
+
+export async function getAdminUserByUsername(
+  username: string
+): Promise<(AdminUser & { passwordHash: string }) | null> {
+  const { data, error } = await supabase
+    .from("admin_users")
+    .select("id, username, is_active, permissions, created_at, password_hash")
+    .eq("username", username)
+    .single();
+
+  if (error || !data) {
+    return null;
+  }
+
+  return {
+    ...adminUserFromRow(data),
+    passwordHash: data.password_hash as string,
+  };
+}
+
+export async function addAdminUser(params: {
+  username: string;
+  passwordHash: string;
+  isActive: boolean;
+  permissions: AdminPermission[];
+}): Promise<AdminUser | null> {
+  const { data, error } = await supabase
+    .from("admin_users")
+    .insert({
+      username: params.username,
+      password_hash: params.passwordHash,
+      is_active: params.isActive,
+      permissions: params.permissions,
+    })
+    .select("id, username, is_active, permissions, created_at")
+    .single();
+
+  if (error || !data) {
+    console.error("addAdminUser error:", error);
+    return null;
+  }
+
+  return adminUserFromRow(data);
+}
+
+export async function updateAdminUser(
+  id: string,
+  updates: Partial<{
+    username: string;
+    passwordHash: string;
+    isActive: boolean;
+    permissions: AdminPermission[];
+  }>
+): Promise<AdminUser | null> {
+  const row: Record<string, unknown> = {};
+  if (updates.username !== undefined) row.username = updates.username;
+  if (updates.passwordHash !== undefined) row.password_hash = updates.passwordHash;
+  if (updates.isActive !== undefined) row.is_active = updates.isActive;
+  if (updates.permissions !== undefined) row.permissions = updates.permissions;
+
+  const { data, error } = await supabase
+    .from("admin_users")
+    .update(row)
+    .eq("id", id)
+    .select("id, username, is_active, permissions, created_at")
+    .single();
+
+  if (error || !data) {
+    console.error("updateAdminUser error:", error);
+    return null;
+  }
+
+  return adminUserFromRow(data);
+}
+
+export async function deleteAdminUser(id: string): Promise<boolean> {
+  const { error } = await supabase.from("admin_users").delete().eq("id", id);
+  if (error) {
+    console.error("deleteAdminUser error:", error);
+    return false;
+  }
+  return true;
 }

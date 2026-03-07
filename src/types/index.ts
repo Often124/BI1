@@ -59,8 +59,24 @@ export interface AdminLog {
   createdAt: string;
 }
 
+export type AdminPermission =
+  | "manageSlides"
+  | "manageSettings"
+  | "manageBirthdays"
+  | "manageUsers"
+  | "viewLogs";
+
+export interface AdminUser {
+  id: string;
+  username: string;
+  isActive: boolean;
+  permissions: AdminPermission[];
+  createdAt: string;
+}
+
 export interface AuthPayload {
   username: string;
+  permissions: AdminPermission[];
   iat: number;
   exp: number;
 }

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { addAdminLog, getSettings, updateSettings } from "@/lib/db";
-import { getAuthenticatedUsername, isAuthenticated } from "@/lib/auth";
+import { getAuthenticatedUsername, hasPermission, isAuthenticated } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -24,6 +24,9 @@ export async function GET(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   if (!isAuthenticated(request)) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+  }
+  if (!hasPermission(request, "manageSettings")) {
+    return NextResponse.json({ error: "Permissions insuffisantes" }, { status: 403 });
   }
 
   try {

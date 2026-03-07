@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { AdminPermission } from "@/types";
 
 interface LoginFormProps {
-  onLogin: (token: string) => void;
+  onLogin: (auth: { token: string; username: string; permissions: AdminPermission[] }) => void;
 }
 
 export default function LoginForm({ onLogin }: LoginFormProps) {
@@ -32,7 +33,9 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
       }
 
       localStorage.setItem("admin_token", data.token);
-      onLogin(data.token);
+      localStorage.setItem("admin_username", data.username);
+      localStorage.setItem("admin_permissions", JSON.stringify(data.permissions || []));
+      onLogin({ token: data.token, username: data.username, permissions: data.permissions || [] });
     } catch {
       setError("Erreur de connexion au serveur");
     } finally {

@@ -53,6 +53,16 @@ CREATE TABLE IF NOT EXISTS admin_logs (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+-- Table : utilisateurs admin
+CREATE TABLE IF NOT EXISTS admin_users (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  username TEXT NOT NULL UNIQUE,
+  password_hash TEXT NOT NULL,
+  is_active BOOLEAN NOT NULL DEFAULT true,
+  permissions JSONB NOT NULL DEFAULT '[]'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
 -- Insérer la ligne de settings par défaut si elle n'existe pas
 INSERT INTO settings (id) VALUES (1) ON CONFLICT (id) DO NOTHING;
 
@@ -61,6 +71,7 @@ ALTER TABLE slides ENABLE ROW LEVEL SECURITY;
 ALTER TABLE birthdays ENABLE ROW LEVEL SECURITY;
 ALTER TABLE settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE admin_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE admin_users ENABLE ROW LEVEL SECURITY;
 
 -- Policies : tout le monde peut lire, tout le monde peut écrire (via anon key)
 -- En production on restreindrait l'écriture, mais ici l'auth admin est gérée côté app
@@ -84,3 +95,8 @@ DROP POLICY IF EXISTS "Allow read logs" ON admin_logs;
 DROP POLICY IF EXISTS "Allow all logs" ON admin_logs;
 CREATE POLICY "Allow read logs" ON admin_logs FOR SELECT USING (true);
 CREATE POLICY "Allow all logs" ON admin_logs FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow read admin users" ON admin_users;
+DROP POLICY IF EXISTS "Allow all admin users" ON admin_users;
+CREATE POLICY "Allow read admin users" ON admin_users FOR SELECT USING (true);
+CREATE POLICY "Allow all admin users" ON admin_users FOR ALL USING (true) WITH CHECK (true);

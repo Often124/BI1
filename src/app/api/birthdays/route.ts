@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getBirthdays, addBirthday, updateBirthday, deleteBirthday, addAdminLog } from "@/lib/db";
-import { getAuthenticatedUsername, isAuthenticated } from "@/lib/auth";
+import { getAuthenticatedUsername, hasPermission, isAuthenticated } from "@/lib/auth";
 import { v4 as uuidv4 } from "uuid";
 
 export const dynamic = "force-dynamic";
@@ -16,6 +16,9 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   if (!isAuthenticated(request)) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+  }
+  if (!hasPermission(request, "manageBirthdays")) {
+    return NextResponse.json({ error: "Permissions insuffisantes" }, { status: 403 });
   }
 
   try {
@@ -52,6 +55,9 @@ export async function PUT(request: NextRequest) {
   if (!isAuthenticated(request)) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   }
+  if (!hasPermission(request, "manageBirthdays")) {
+    return NextResponse.json({ error: "Permissions insuffisantes" }, { status: 403 });
+  }
 
   try {
     const body = await request.json();
@@ -84,6 +90,9 @@ export async function PUT(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   if (!isAuthenticated(request)) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+  }
+  if (!hasPermission(request, "manageBirthdays")) {
+    return NextResponse.json({ error: "Permissions insuffisantes" }, { status: 403 });
   }
 
   try {

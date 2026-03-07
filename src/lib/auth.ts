@@ -1,32 +1,56 @@
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
-import { AuthPayload } from "@/types";
+import { AuthPayload, AdminPermission } from "@/types";
+import { getAdminUserByUsername } from "@/lib/db";
 
 const JWT_SECRET = process.env.JWT_SECRET || "bi1gestion-default-secret";
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME || "admin";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
 
-// Hash du mot de passe admin (généré au premier appel)
-let adminPasswordHash: string | null = null;
+const ALL_PERMISSIONS: AdminPermission[] = [
+  "manageSlides",
+  "manageSettings",
+  "manageBirthdays",
+  "manageUsers",
+  "viewLogs",
+];
 
-async function getAdminHash(): Promise<string> {
-  if (!adminPasswordHash) {
-    adminPasswordHash = await bcrypt.hash(ADMIN_PASSWORD, 10);
-  }
-  return adminPasswordHash;
+export function getAllPermissions(): AdminPermission[] {
+  return [...ALL_PERMISSIONS];
 }
 
-export async function verifyCredentials(
+export function hasPermissionFromPayload(
+  payload: Pick<AuthPayload, "permissions"> | null,
+  permission: AdminPermission
+): boolean {
+  if (!payload) return false;
+  const permissions = Array.isArray(payload.permissions) ? payload.permissions : [];
+  return permissions.includes(permission);
+}
+
+export async function authenticateUser(
   username: string,
   password: string
-): Promise<boolean> {
-  if (username !== ADMIN_USERNAME) return false;
-  // Comparaison directe pour simplifier (le hash est généré à partir du .env)
-  return password === ADMIN_PASSWORD;
+): Promise<{ username: string; permissions: AdminPermission[] } | null> {
+  // Fallback historique via .env
+  if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+    return { username, permissions: getAllPermissions() };
+  }
+
+  const dbUser = await getAdminUserByUsername(username);
+  if (!dbUser || !dbUser.isActive) return null;
+
+  const valid = await bcrypt.compare(password, dbUser.passwordHash);
+  if (!valid) return null;
+
+  return {
+    username: dbUser.username,
+    permissions: dbUser.permissions,
+  };
 }
 
-export function generateToken(username: string): string {
-  return jwt.sign({ username }, JWT_SECRET, { expiresIn: "24h" });
+export function generateToken(username: string, permissions: AdminPermission[]): string {
+  return jwt.sign({ username, permissions }, JWT_SECRET, { expiresIn: "24h" });
 }
 
 export function verifyToken(token: string): AuthPayload | null {
@@ -51,6 +75,14 @@ export function isAuthenticated(request: Request): boolean {
   if (!token) return false;
   const payload = verifyToken(token);
   return payload !== null;
+}
+
+export function hasPermission(request: Request, permission: AdminPermission): boolean {
+  const authHeader = request.headers.get("authorization");
+  const token = extractToken(authHeader);
+  if (!token) return false;
+  const payload = verifyToken(token);
+  return hasPermissionFromPayload(payload, permission);
 }
 
 export function getAuthenticatedUsername(request: Request): string | null {

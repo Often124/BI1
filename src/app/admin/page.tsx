@@ -1,30 +1,51 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Slide, Settings, DEFAULT_SETTINGS, Birthday, AdminLog } from "@/types";
+import { Slide, Settings, DEFAULT_SETTINGS, Birthday, AdminLog, AdminPermission, AdminUser } from "@/types";
 import LoginForm from "@/components/admin/LoginForm";
 import SlideManager from "@/components/admin/SlideManager";
 import BannerSettings from "@/components/admin/BannerSettings";
 import BirthdayManager from "@/components/admin/BirthdayManager";
 import DisplayPreview from "@/components/admin/DisplayPreview";
 import AdminLogs from "@/components/admin/AdminLogs";
+import UserManager from "@/components/admin/UserManager";
 
-type Tab = "slides" | "settings" | "birthdays" | "preview" | "logs";
+type Tab = "slides" | "settings" | "birthdays" | "preview" | "logs" | "users";
 
 export default function AdminPage() {
   const [token, setToken] = useState<string | null>(null);
+  const [username, setUsername] = useState("admin");
+  const [permissions, setPermissions] = useState<AdminPermission[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<Tab>("slides");
   const [slides, setSlides] = useState<Slide[]>([]);
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
   const [birthdays, setBirthdays] = useState<Birthday[]>([]);
   const [logs, setLogs] = useState<AdminLog[]>([]);
+  const [users, setUsers] = useState<AdminUser[]>([]);
+
+  const can = useCallback(
+    (permission: AdminPermission) => permissions.includes(permission),
+    [permissions]
+  );
 
   // Vérifier le token au chargement
   useEffect(() => {
     const savedToken = localStorage.getItem("admin_token");
+    const savedUsername = localStorage.getItem("admin_username");
+    const savedPermissions = localStorage.getItem("admin_permissions");
     if (savedToken) {
       setToken(savedToken);
+    }
+    if (savedUsername) {
+      setUsername(savedUsername);
+    }
+    if (savedPermissions) {
+      try {
+        setPermissions(JSON.parse(savedPermissions));
+      } catch {
+        setPermissions([]);
+      }
     }
     setLoading(false);
   }, []);
@@ -36,11 +57,10 @@ export default function AdminPage() {
     try {
       const headers = { Authorization: `Bearer ${token}` };
 
-      const [slidesRes, settingsRes, birthdaysRes, logsRes] = await Promise.all([
+      const [slidesRes, settingsRes, birthdaysRes] = await Promise.all([
         fetch("/api/slides", { headers, cache: "no-store" }),
         fetch("/api/settings", { headers, cache: "no-store" }),
         fetch("/api/birthdays", { headers, cache: "no-store" }),
-        fetch("/api/logs?limit=200", { headers, cache: "no-store" }),
       ]);
 
       if (slidesRes.status === 401) {
@@ -60,26 +80,58 @@ export default function AdminPage() {
         setBirthdays(await birthdaysRes.json());
       }
 
-      if (logsRes.ok) {
-        setLogs(await logsRes.json());
+      if (can("viewLogs")) {
+        const logsRes = await fetch("/api/logs?limit=200", { headers, cache: "no-store" });
+        if (logsRes.ok) {
+          setLogs(await logsRes.json());
+        }
+      }
+
+      if (can("manageUsers")) {
+        const usersRes = await fetch("/api/admin-users", { headers, cache: "no-store" });
+        if (usersRes.ok) {
+          setUsers(await usersRes.json());
+        }
       }
     } catch (error) {
       console.error("Erreur chargement:", error);
     }
-  }, [token]);
+  }, [token, can]);
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
 
-  const handleLogin = (newToken: string) => {
-    setToken(newToken);
+  const handleLogin = (auth: { token: string; username: string; permissions: AdminPermission[] }) => {
+    setToken(auth.token);
+    setUsername(auth.username);
+    setPermissions(auth.permissions);
   };
 
   const handleLogout = () => {
     localStorage.removeItem("admin_token");
+    localStorage.removeItem("admin_username");
+    localStorage.removeItem("admin_permissions");
     setToken(null);
+    setPermissions([]);
   };
+
+  const tabs: { id: Tab; label: string; icon: string; visible: boolean }[] = [
+    { id: "slides", label: "Images", icon: "🖼️", visible: can("manageSlides") },
+    { id: "birthdays", label: "Anniversaires", icon: "🎂", visible: can("manageBirthdays") },
+    { id: "settings", label: "Paramètres", icon: "⚙️", visible: can("manageSettings") },
+    { id: "preview", label: "Prévisualisation", icon: "📺", visible: true },
+    { id: "logs", label: "Logs", icon: "📜", visible: can("viewLogs") },
+    { id: "users", label: "Utilisateurs", icon: "👥", visible: can("manageUsers") },
+  ];
+
+  const visibleTabs = tabs.filter((tab) => tab.visible);
+
+  useEffect(() => {
+    if (!visibleTabs.some((tab) => tab.id === activeTab)) {
+      setActiveTab(visibleTabs[0]?.id || "preview");
+    }
+  }, [activeTab, visibleTabs]);
 
   if (loading) {
     return (
@@ -98,14 +150,6 @@ export default function AdminPage() {
   if (!token) {
     return <LoginForm onLogin={handleLogin} />;
   }
-
-  const tabs: { id: Tab; label: string; icon: string }[] = [
-    { id: "slides", label: "Images", icon: "🖼️" },
-    { id: "birthdays", label: "Anniversaires", icon: "🎂" },
-    { id: "settings", label: "Paramètres", icon: "⚙️" },
-    { id: "preview", label: "Prévisualisation", icon: "📺" },
-    { id: "logs", label: "Logs", icon: "📜" },
-  ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-950 to-gray-900">
@@ -128,7 +172,7 @@ export default function AdminPage() {
 
             {/* Tabs */}
             <div className="flex items-center gap-1 bg-gray-800/50 rounded-xl p-1">
-              {tabs.map((tab) => (
+              {visibleTabs.map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
@@ -191,6 +235,15 @@ export default function AdminPage() {
 
         {activeTab === "logs" && (
           <AdminLogs logs={logs} />
+        )}
+
+        {activeTab === "users" && (
+          <UserManager
+            token={token}
+            users={users}
+            currentUsername={username}
+            onUpdate={fetchData}
+          />
         )}
       </main>
     </div>

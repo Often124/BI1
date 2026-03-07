@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { supabase } from "@/lib/supabase";
-import { Slide, Settings, Birthday, DEFAULT_SETTINGS } from "@/types";
+import { Slide, Settings, Birthday, DEFAULT_SETTINGS, AdminLog } from "@/types";
 
 const UPLOADS_DIR = path.join(process.cwd(), "public", "uploads");
 
@@ -28,6 +28,8 @@ function slideFromRow(row: Record<string, unknown>): Slide {
 function settingsFromRow(row: Record<string, unknown>): Settings {
   return {
     scrollingText: row.scrolling_text as string,
+    emergencyMode: (row.emergency_mode as boolean) || false,
+    emergencyMessage: (row.emergency_message as string) || "",
     weatherCity: row.weather_city as string,
     weatherApiKey: row.weather_api_key as string,
     showClock: row.show_clock as boolean,
@@ -40,6 +42,15 @@ function settingsFromRow(row: Record<string, unknown>): Settings {
     googleSlidesUrl: row.google_slides_url as string,
     googleSlidesEnabled: row.google_slides_enabled as boolean,
     googleSlidesDelayMs: row.google_slides_delay_ms as number,
+  };
+}
+
+function logFromRow(row: Record<string, unknown>): AdminLog {
+  return {
+    id: row.id as string,
+    action: row.action as string,
+    details: row.details as string,
+    createdAt: row.created_at as string,
   };
 }
 
@@ -178,6 +189,8 @@ export async function getSettings(): Promise<Settings> {
 export async function updateSettings(updates: Partial<Settings>): Promise<Settings> {
   const row: Record<string, unknown> = {};
   if (updates.scrollingText !== undefined) row.scrolling_text = updates.scrollingText;
+  if (updates.emergencyMode !== undefined) row.emergency_mode = updates.emergencyMode;
+  if (updates.emergencyMessage !== undefined) row.emergency_message = updates.emergencyMessage;
   if (updates.weatherCity !== undefined) row.weather_city = updates.weatherCity;
   if (updates.weatherApiKey !== undefined) row.weather_api_key = updates.weatherApiKey;
   if (updates.showClock !== undefined) row.show_clock = updates.showClock;
@@ -257,4 +270,33 @@ export async function deleteBirthday(id: string): Promise<boolean> {
     return false;
   }
   return true;
+}
+
+// ===== ADMIN LOGS =====
+
+export async function addAdminLog(action: string, details: string): Promise<void> {
+  const { error } = await supabase.from("admin_logs").insert({
+    action,
+    details,
+    created_at: new Date().toISOString(),
+  });
+
+  if (error) {
+    console.error("addAdminLog error:", error);
+  }
+}
+
+export async function getAdminLogs(limit = 100): Promise<AdminLog[]> {
+  const { data, error } = await supabase
+    .from("admin_logs")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    console.error("getAdminLogs error:", error);
+    return [];
+  }
+
+  return (data || []).map(logFromRow);
 }

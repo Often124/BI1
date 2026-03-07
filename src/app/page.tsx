@@ -21,7 +21,7 @@ export default function DisplayPage() {
   const [slides, setSlides] = useState<Slide[]>([]);
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
 
-  const REFRESH_MS = 5000;
+  const DISPLAY_CACHE_KEY = "display-cache-v1";
 
   const fetchData = useCallback(async () => {
     try {
@@ -33,24 +33,55 @@ export default function DisplayPage() {
       if (slidesRes.ok) {
         const slidesData = await slidesRes.json();
         setSlides(slidesData);
+
+        try {
+          const cachedRaw = localStorage.getItem(DISPLAY_CACHE_KEY);
+          const cached = cachedRaw ? JSON.parse(cachedRaw) : {};
+          localStorage.setItem(DISPLAY_CACHE_KEY, JSON.stringify({ ...cached, slides: slidesData }));
+        } catch {
+          // ignore cache write errors
+        }
       }
 
       if (settingsRes.ok) {
         const settingsData = await settingsRes.json();
         setSettings(settingsData);
+
+        try {
+          const cachedRaw = localStorage.getItem(DISPLAY_CACHE_KEY);
+          const cached = cachedRaw ? JSON.parse(cachedRaw) : {};
+          localStorage.setItem(DISPLAY_CACHE_KEY, JSON.stringify({ ...cached, settings: settingsData }));
+        } catch {
+          // ignore cache write errors
+        }
       }
     } catch (error) {
       console.error("Erreur chargement données:", error);
+
+      // Fallback hors-ligne: restaurer la dernière configuration connue
+      try {
+        const cachedRaw = localStorage.getItem(DISPLAY_CACHE_KEY);
+        if (!cachedRaw) return;
+        const cached = JSON.parse(cachedRaw) as { slides?: Slide[]; settings?: Settings };
+        if (cached.slides) setSlides(cached.slides);
+        if (cached.settings) setSettings(cached.settings);
+      } catch {
+        // ignore cache read errors
+      }
     }
-  }, []);
+  }, [DISPLAY_CACHE_KEY]);
 
   useEffect(() => {
     fetchData();
 
-    // Actualisation automatique sans refresh de page
-    const interval = setInterval(fetchData, REFRESH_MS);
+    // Mode Google Slides: fallback polling, car on n'a pas d'événement de fin de cycle fiable.
+    const interval = setInterval(() => {
+      if (settings.googleSlidesEnabled && settings.googleSlidesUrl) {
+        fetchData();
+      }
+    }, 30000);
     return () => clearInterval(interval);
-  }, [fetchData, REFRESH_MS]);
+  }, [fetchData, settings.googleSlidesEnabled, settings.googleSlidesUrl]);
 
   useEffect(() => {
     const requestFullscreen = async () => {
@@ -105,6 +136,7 @@ export default function DisplayPage() {
         <Slideshow
           slides={slides}
           transitionDuration={settings.transitionDuration}
+          onCycleComplete={fetchData}
         />
       )}
       <InfoBanner settings={settings} fixed />

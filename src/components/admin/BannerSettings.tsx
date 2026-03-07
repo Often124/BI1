@@ -106,6 +106,39 @@ export default function BannerSettings({ settings, token, onUpdate }: BannerSett
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Mode urgence */}
+        <div className="lg:col-span-2 bg-red-900/20 rounded-xl p-5 border border-red-500/30">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-medium text-red-300 flex items-center gap-2">
+              <span className="text-xl">🚨</span>
+              Mode urgence / message prioritaire
+            </h3>
+            <button
+              onClick={() => setLocalSettings({ ...localSettings, emergencyMode: !localSettings.emergencyMode })}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                localSettings.emergencyMode ? "bg-red-600" : "bg-gray-600"
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  localSettings.emergencyMode ? "translate-x-6" : "translate-x-1"
+                }`}
+              />
+            </button>
+          </div>
+
+          <textarea
+            value={localSettings.emergencyMessage}
+            onChange={(e) => setLocalSettings({ ...localSettings, emergencyMessage: e.target.value })}
+            rows={2}
+            className="w-full px-4 py-3 bg-red-950/30 border border-red-500/30 rounded-xl text-red-100 placeholder-red-200/50 focus:outline-none focus:ring-2 focus:ring-red-500/40 focus:border-transparent transition-all resize-none"
+            placeholder="Message prioritaire (ex: Alerte incendie, évacuez le bâtiment immédiatement)"
+          />
+          <p className="text-xs text-red-200/80 mt-2">
+            Quand activé, ce message est affiché en priorité dans le bandeau.
+          </p>
+        </div>
+
         {/* Texte défilant */}
         <div className="lg:col-span-2 bg-gray-800/40 rounded-xl p-5 border border-gray-700/50">
           <label className="block text-sm font-medium text-gray-300 mb-2">

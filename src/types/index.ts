@@ -17,6 +17,8 @@ export interface Birthday {
 
 export interface Settings {
   scrollingText: string;
+  emergencyMode: boolean;
+  emergencyMessage: string;
   weatherCity: string;
   weatherApiKey: string;
   showClock: boolean;
@@ -50,6 +52,13 @@ export interface WeatherData {
   }[];
 }
 
+export interface AdminLog {
+  id: string;
+  action: string;
+  details: string;
+  createdAt: string;
+}
+
 export interface AuthPayload {
   username: string;
   iat: number;
@@ -58,6 +67,8 @@ export interface AuthPayload {
 
 export const DEFAULT_SETTINGS: Settings = {
   scrollingText: "Bienvenue ! Ceci est un texte défilant personnalisable depuis le panneau d'administration.",
+  emergencyMode: false,
+  emergencyMessage: "",
   weatherCity: "Paris",
   weatherApiKey: "",
   showClock: true,

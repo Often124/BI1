@@ -21,12 +21,19 @@ export default function InfoBanner({ settings, fixed = false }: InfoBannerProps)
     <div className={containerClass}>
       {/* Bandeau principal */}
       <div className="bg-black/80 backdrop-blur-md border-t border-white/10">
-        {/* Ligne du texte défilant */}
-        {settings.showScrollingText && settings.scrollingText && (
+        {/* Ligne prioritaire */}
+        {settings.emergencyMode && settings.emergencyMessage ? (
+          <div className="border-b border-red-400/30 bg-red-700/40 py-3 px-6">
+            <div className="flex items-center gap-3 text-red-100">
+              <span className="text-2xl">🚨</span>
+              <p className="text-2xl font-semibold tracking-wide">{settings.emergencyMessage}</p>
+            </div>
+          </div>
+        ) : settings.showScrollingText && settings.scrollingText ? (
           <div className="border-b border-white/5 py-3 px-6">
             <ScrollingText text={settings.scrollingText} speed={settings.scrollSpeed} />
           </div>
-        )}
+        ) : null}
 
         {/* Ligne d'infos: heure, date, météo, anniversaires */}
         <div className="flex items-center justify-between px-8 py-5">

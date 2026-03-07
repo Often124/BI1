@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { isAuthenticated } from "@/lib/auth";
-import { getUploadsDir } from "@/lib/db";
+import { getAuthenticatedUsername, isAuthenticated } from "@/lib/auth";
+import { addAdminLog, getUploadsDir } from "@/lib/db";
 import { v4 as uuidv4 } from "uuid";
 import path from "path";
 import fs from "fs";
@@ -46,6 +46,9 @@ export async function POST(request: NextRequest) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
     fs.writeFileSync(filePath, buffer);
+
+    const username = getAuthenticatedUsername(request) || "admin";
+    await addAdminLog("upload:create", `${username} a uploadé ${file.name}`);
 
     return NextResponse.json({
       filename,

@@ -25,6 +25,8 @@ CREATE TABLE IF NOT EXISTS birthdays (
 CREATE TABLE IF NOT EXISTS settings (
   id INTEGER PRIMARY KEY DEFAULT 1 CHECK (id = 1),
   scrolling_text TEXT NOT NULL DEFAULT 'Bienvenue !',
+  emergency_mode BOOLEAN NOT NULL DEFAULT false,
+  emergency_message TEXT NOT NULL DEFAULT '',
   weather_city TEXT NOT NULL DEFAULT 'Paris',
   weather_api_key TEXT NOT NULL DEFAULT '',
   show_clock BOOLEAN NOT NULL DEFAULT true,
@@ -39,6 +41,18 @@ CREATE TABLE IF NOT EXISTS settings (
   google_slides_delay_ms INTEGER NOT NULL DEFAULT 5000
 );
 
+-- Compatibilité migration incrémentale
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS emergency_mode BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS emergency_message TEXT NOT NULL DEFAULT '';
+
+-- Table : logs admin
+CREATE TABLE IF NOT EXISTS admin_logs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  action TEXT NOT NULL,
+  details TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
 -- Insérer la ligne de settings par défaut si elle n'existe pas
 INSERT INTO settings (id) VALUES (1) ON CONFLICT (id) DO NOTHING;
 
@@ -46,6 +60,7 @@ INSERT INTO settings (id) VALUES (1) ON CONFLICT (id) DO NOTHING;
 ALTER TABLE slides ENABLE ROW LEVEL SECURITY;
 ALTER TABLE birthdays ENABLE ROW LEVEL SECURITY;
 ALTER TABLE settings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE admin_logs ENABLE ROW LEVEL SECURITY;
 
 -- Policies : tout le monde peut lire, tout le monde peut écrire (via anon key)
 -- En production on restreindrait l'écriture, mais ici l'auth admin est gérée côté app
@@ -64,3 +79,8 @@ DROP POLICY IF EXISTS "Allow read settings" ON settings;
 DROP POLICY IF EXISTS "Allow all settings" ON settings;
 CREATE POLICY "Allow read settings" ON settings FOR SELECT USING (true);
 CREATE POLICY "Allow all settings" ON settings FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow read logs" ON admin_logs;
+DROP POLICY IF EXISTS "Allow all logs" ON admin_logs;
+CREATE POLICY "Allow read logs" ON admin_logs FOR SELECT USING (true);
+CREATE POLICY "Allow all logs" ON admin_logs FOR ALL USING (true) WITH CHECK (true);

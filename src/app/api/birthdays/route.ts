@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getBirthdays, addBirthday, updateBirthday, deleteBirthday } from "@/lib/db";
-import { isAuthenticated } from "@/lib/auth";
+import { getBirthdays, addBirthday, updateBirthday, deleteBirthday, addAdminLog } from "@/lib/db";
+import { getAuthenticatedUsername, isAuthenticated } from "@/lib/auth";
 import { v4 as uuidv4 } from "uuid";
 
 export const dynamic = "force-dynamic";
@@ -37,6 +37,9 @@ export async function POST(request: NextRequest) {
       month: Number(month),
     });
 
+    const username = getAuthenticatedUsername(request) || "admin";
+    await addAdminLog("birthdays:create", `${username} a ajouté l'anniversaire de ${birthday.name}`);
+
     return NextResponse.json(birthday, { status: 201 });
   } catch (error) {
     console.error("Create birthday error:", error);
@@ -67,6 +70,9 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: "Anniversaire non trouvé" }, { status: 404 });
     }
 
+    const username = getAuthenticatedUsername(request) || "admin";
+    await addAdminLog("birthdays:update", `${username} a modifié un anniversaire (${id})`);
+
     return NextResponse.json(birthday);
   } catch (error) {
     console.error("Update birthday error:", error);
@@ -92,6 +98,9 @@ export async function DELETE(request: NextRequest) {
     if (!deleted) {
       return NextResponse.json({ error: "Anniversaire non trouvé" }, { status: 404 });
     }
+
+    const username = getAuthenticatedUsername(request) || "admin";
+    await addAdminLog("birthdays:delete", `${username} a supprimé un anniversaire (${id})`);
 
     return NextResponse.json({ success: true });
   } catch (error) {

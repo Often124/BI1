@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAllSlides, getSlides, addSlide, updateSlide, deleteSlide, reorderSlides } from "@/lib/db";
-import { isAuthenticated } from "@/lib/auth";
+import { getAllSlides, getSlides, addSlide, updateSlide, deleteSlide, reorderSlides, addAdminLog } from "@/lib/db";
+import { getAuthenticatedUsername, isAuthenticated } from "@/lib/auth";
 import { v4 as uuidv4 } from "uuid";
 
 export const dynamic = "force-dynamic";
@@ -38,6 +38,9 @@ export async function POST(request: NextRequest) {
       createdAt: new Date().toISOString(),
     });
 
+    const username = getAuthenticatedUsername(request) || "admin";
+    await addAdminLog("slides:create", `${username} a ajouté le slide ${slide.originalName}`);
+
     return NextResponse.json(slide, { status: 201 });
   } catch (error) {
     console.error("Create slide error:", error);
@@ -57,6 +60,8 @@ export async function PUT(request: NextRequest) {
     // Réordonner les slides
     if (body.orderedIds && Array.isArray(body.orderedIds)) {
       const slides = await reorderSlides(body.orderedIds);
+      const username = getAuthenticatedUsername(request) || "admin";
+      await addAdminLog("slides:reorder", `${username} a réordonné les slides`);
       return NextResponse.json(slides);
     }
 
@@ -67,6 +72,8 @@ export async function PUT(request: NextRequest) {
       if (!slide) {
         return NextResponse.json({ error: "Slide non trouvé" }, { status: 404 });
       }
+      const username = getAuthenticatedUsername(request) || "admin";
+      await addAdminLog("slides:update", `${username} a modifié le slide ${slide.originalName}`);
       return NextResponse.json(slide);
     }
 
@@ -95,6 +102,9 @@ export async function DELETE(request: NextRequest) {
     if (!deleted) {
       return NextResponse.json({ error: "Slide non trouvé" }, { status: 404 });
     }
+
+    const username = getAuthenticatedUsername(request) || "admin";
+    await addAdminLog("slides:delete", `${username} a supprimé un slide (${id})`);
 
     return NextResponse.json({ success: true });
   } catch (error) {

@@ -6,9 +6,10 @@ import { Slide } from "@/types";
 interface SlideshowProps {
   slides: Slide[];
   transitionDuration: number;
+  onCycleComplete?: () => void;
 }
 
-export default function Slideshow({ slides, transitionDuration }: SlideshowProps) {
+export default function Slideshow({ slides, transitionDuration, onCycleComplete }: SlideshowProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [nextIndex, setNextIndex] = useState<number | null>(null);
@@ -32,13 +33,17 @@ export default function Slideshow({ slides, transitionDuration }: SlideshowProps
     if (total === 0) return;
 
     // Même avec 1 seul slide, on force un "cycle" pour replanifier
-    const next = (currentIndexRef.current + 1) % total;
+    const current = currentIndexRef.current;
+    const next = (current + 1) % total;
     
     if (total <= 1) {
       // 1 seul slide : pas de transition, juste replanifier
       setCurrentIndex(0);
+      onCycleComplete?.();
       return;
     }
+
+    const hasCompletedCycle = current === total - 1 && next === 0;
 
     setNextIndex(next);
     setIsTransitioning(true);
@@ -47,8 +52,12 @@ export default function Slideshow({ slides, transitionDuration }: SlideshowProps
       setCurrentIndex(next);
       setNextIndex(null);
       setIsTransitioning(false);
+
+      if (hasCompletedCycle) {
+        onCycleComplete?.();
+      }
     }, transitionDuration);
-  }, [transitionDuration]);
+  }, [transitionDuration, onCycleComplete]);
 
   // Planification de la boucle
   useEffect(() => {

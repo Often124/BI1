@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSettings, updateSettings } from "@/lib/db";
-import { isAuthenticated } from "@/lib/auth";
+import { addAdminLog, getSettings, updateSettings } from "@/lib/db";
+import { getAuthenticatedUsername, isAuthenticated } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -35,6 +35,8 @@ export async function PUT(request: NextRequest) {
     }
 
     const settings = await updateSettings(body);
+    const username = getAuthenticatedUsername(request) || "admin";
+    await addAdminLog("settings:update", `${username} a modifié les paramètres du bandeau`);
     return NextResponse.json(settings);
   } catch (error) {
     console.error("Update settings error:", error);

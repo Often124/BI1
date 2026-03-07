@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyCredentials, generateToken } from "@/lib/auth";
+import { addAdminLog } from "@/lib/db";
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,6 +16,7 @@ export async function POST(request: NextRequest) {
 
     const valid = await verifyCredentials(username, password);
     if (!valid) {
+      await addAdminLog("auth:failed", `Échec de connexion pour ${username || "inconnu"}`);
       return NextResponse.json(
         { error: "Identifiants invalides" },
         { status: 401 }
@@ -22,6 +24,7 @@ export async function POST(request: NextRequest) {
     }
 
     const token = generateToken(username);
+    await addAdminLog("auth:login", `${username} s'est connecté`);
     return NextResponse.json({ token, username });
   } catch (error) {
     console.error("Auth error:", error);

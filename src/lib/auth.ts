@@ -52,3 +52,11 @@ export function isAuthenticated(request: Request): boolean {
   const payload = verifyToken(token);
   return payload !== null;
 }
+
+export function getAuthenticatedUsername(request: Request): string | null {
+  const authHeader = request.headers.get("authorization");
+  const token = extractToken(authHeader);
+  if (!token) return null;
+  const payload = verifyToken(token);
+  return payload?.username || null;
+}

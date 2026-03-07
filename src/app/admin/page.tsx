@@ -1,14 +1,15 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Slide, Settings, DEFAULT_SETTINGS, Birthday } from "@/types";
+import { Slide, Settings, DEFAULT_SETTINGS, Birthday, AdminLog } from "@/types";
 import LoginForm from "@/components/admin/LoginForm";
 import SlideManager from "@/components/admin/SlideManager";
 import BannerSettings from "@/components/admin/BannerSettings";
 import BirthdayManager from "@/components/admin/BirthdayManager";
 import DisplayPreview from "@/components/admin/DisplayPreview";
+import AdminLogs from "@/components/admin/AdminLogs";
 
-type Tab = "slides" | "settings" | "birthdays" | "preview";
+type Tab = "slides" | "settings" | "birthdays" | "preview" | "logs";
 
 export default function AdminPage() {
   const [token, setToken] = useState<string | null>(null);
@@ -17,6 +18,7 @@ export default function AdminPage() {
   const [slides, setSlides] = useState<Slide[]>([]);
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
   const [birthdays, setBirthdays] = useState<Birthday[]>([]);
+  const [logs, setLogs] = useState<AdminLog[]>([]);
 
   // Vérifier le token au chargement
   useEffect(() => {
@@ -34,10 +36,11 @@ export default function AdminPage() {
     try {
       const headers = { Authorization: `Bearer ${token}` };
 
-      const [slidesRes, settingsRes, birthdaysRes] = await Promise.all([
+      const [slidesRes, settingsRes, birthdaysRes, logsRes] = await Promise.all([
         fetch("/api/slides", { headers, cache: "no-store" }),
         fetch("/api/settings", { headers, cache: "no-store" }),
         fetch("/api/birthdays", { headers, cache: "no-store" }),
+        fetch("/api/logs?limit=200", { headers, cache: "no-store" }),
       ]);
 
       if (slidesRes.status === 401) {
@@ -55,6 +58,10 @@ export default function AdminPage() {
 
       if (birthdaysRes.ok) {
         setBirthdays(await birthdaysRes.json());
+      }
+
+      if (logsRes.ok) {
+        setLogs(await logsRes.json());
       }
     } catch (error) {
       console.error("Erreur chargement:", error);
@@ -97,6 +104,7 @@ export default function AdminPage() {
     { id: "birthdays", label: "Anniversaires", icon: "🎂" },
     { id: "settings", label: "Paramètres", icon: "⚙️" },
     { id: "preview", label: "Prévisualisation", icon: "📺" },
+    { id: "logs", label: "Logs", icon: "📜" },
   ];
 
   return (
@@ -179,6 +187,10 @@ export default function AdminPage() {
 
         {activeTab === "preview" && (
           <DisplayPreview slides={slides} settings={settings} />
+        )}
+
+        {activeTab === "logs" && (
+          <AdminLogs logs={logs} />
         )}
       </main>
     </div>

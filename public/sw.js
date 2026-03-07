@@ -23,6 +23,7 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
+  const hasAuthHeader = !!event.request.headers.get("authorization");
 
   // Cache-first for static assets
   if (event.request.method === "GET" && url.origin === self.location.origin && url.pathname.startsWith("/_next/")) {
@@ -42,19 +43,26 @@ self.addEventListener("fetch", (event) => {
   // Stale-while-revalidate for key APIs used by display mode
   const apiPaths = ["/api/slides", "/api/settings", "/api/weather", "/api/birthdays"];
   if (event.request.method === "GET" && url.origin === self.location.origin && apiPaths.includes(url.pathname)) {
+    // Ne jamais servir le cache pour les requêtes admin authentifiées
+    if (hasAuthHeader) {
+      event.respondWith(fetch(event.request));
+      return;
+    }
+
     event.respondWith(
       caches.open(API_CACHE_NAME).then(async (cache) => {
-        const cached = await cache.match(event.request);
-        const networkPromise = fetch(event.request)
-          .then((response) => {
-            if (response.ok) {
-              cache.put(event.request, response.clone());
-            }
-            return response;
-          })
-          .catch(() => cached);
-
-        return cached || networkPromise;
+        try {
+          // Network-first pour afficher les dernières données sans refresh.
+          const networkResponse = await fetch(event.request);
+          if (networkResponse.ok) {
+            cache.put(event.request, networkResponse.clone());
+          }
+          return networkResponse;
+        } catch {
+          const cached = await cache.match(event.request);
+          if (cached) return cached;
+          throw new Error("Offline and no cache available");
+        }
       })
     );
   }

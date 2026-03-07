@@ -202,6 +202,9 @@ export async function getSettings(): Promise<Settings> {
 }
 
 export async function updateSettings(updates: Partial<Settings>): Promise<Settings> {
+  const triesToUpdateEmergency =
+    updates.emergencyMode !== undefined || updates.emergencyMessage !== undefined;
+
   const row: Record<string, unknown> = {};
   if (updates.scrollingText !== undefined) row.scrolling_text = updates.scrollingText;
   if (updates.emergencyMode !== undefined) row.emergency_mode = updates.emergencyMode;
@@ -228,6 +231,10 @@ export async function updateSettings(updates: Partial<Settings>): Promise<Settin
 
   // Compatibilité si la migration SQL n'a pas encore ajouté emergency_mode/emergency_message.
   if (error && /emergency_mode|emergency_message/i.test(error.message || "")) {
+    if (triesToUpdateEmergency) {
+      throw new Error("Mode urgence indisponible: exécute la migration SQL Supabase (colonnes emergency_mode/emergency_message manquantes)");
+    }
+
     const fallbackRow = { ...row };
     delete fallbackRow.emergency_mode;
     delete fallbackRow.emergency_message;
@@ -373,7 +380,7 @@ export async function addAdminUser(params: {
   passwordHash: string;
   isActive: boolean;
   permissions: AdminPermission[];
-}): Promise<AdminUser | null> {
+}): Promise<AdminUser> {
   const { data, error } = await supabase
     .from("admin_users")
     .insert({
@@ -387,7 +394,7 @@ export async function addAdminUser(params: {
 
   if (error || !data) {
     console.error("addAdminUser error:", error);
-    return null;
+    throw new Error(error?.message || "Impossible de créer l'utilisateur");
   }
 
   return adminUserFromRow(data);

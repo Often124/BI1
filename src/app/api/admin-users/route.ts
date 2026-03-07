@@ -65,17 +65,20 @@ export async function POST(request: NextRequest) {
       permissions,
     });
 
-    if (!created) {
-      return NextResponse.json({ error: "Impossible de créer l'utilisateur" }, { status: 500 });
-    }
-
     const actor = getAuthenticatedUsername(request) || "admin";
     await addAdminLog("users:create", `${actor} a créé l'utilisateur ${username}`);
 
     return NextResponse.json(created, { status: 201 });
   } catch (error) {
     console.error("admin-users POST error:", error);
-    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
+    const message = error instanceof Error ? error.message : "Erreur serveur";
+    if (/duplicate key|unique/i.test(message)) {
+      return NextResponse.json({ error: "Ce nom d'utilisateur existe déjà" }, { status: 409 });
+    }
+    if (/admin_users/i.test(message)) {
+      return NextResponse.json({ error: "Table admin_users absente. Exécute la migration SQL Supabase." }, { status: 500 });
+    }
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 

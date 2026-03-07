@@ -25,8 +25,14 @@ export default function AdminPage() {
   const [users, setUsers] = useState<AdminUser[]>([]);
 
   const can = useCallback(
-    (permission: AdminPermission) => permissions.includes(permission),
-    [permissions]
+    (permission: AdminPermission) => {
+      // Compatibilite: ancienne session admin sans permissions stockees.
+      if (permissions.length === 0 && username === "admin") {
+        return true;
+      }
+      return permissions.includes(permission);
+    },
+    [permissions, username]
   );
 
   // Vérifier le token au chargement

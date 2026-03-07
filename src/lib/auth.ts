@@ -24,7 +24,14 @@ export function hasPermissionFromPayload(
   permission: AdminPermission
 ): boolean {
   if (!payload) return false;
-  const permissions = Array.isArray(payload.permissions) ? payload.permissions : [];
+  const anyPayload = payload as unknown as { username?: string; permissions?: unknown };
+  const permissions = Array.isArray(anyPayload.permissions) ? anyPayload.permissions : [];
+
+  // Compatibilite: anciens tokens sans champ permissions pour le compte admin principal.
+  if (permissions.length === 0 && anyPayload.username === ADMIN_USERNAME) {
+    return true;
+  }
+
   return permissions.includes(permission);
 }
 
